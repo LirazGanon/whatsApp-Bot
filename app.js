@@ -16,7 +16,7 @@ client.on("messageCreate", async (msg) => {
     // general.permissionOverwrites.edit("1010988976066265329", { SEND_MESSAGES: false }).then(() => msg.channel.send("success"));
     // console.log(msg.guild);
     const channels = await msg.guild.channels.cache;
-    const readOnlyChannels = ["998682973513728230"];
+    const readOnlyChannels = ["998682973513728230", "999736957615755385"];
     let check;
     for (const channel of channels) {
       check = true;
@@ -28,7 +28,9 @@ client.on("messageCreate", async (msg) => {
 
       if (check && channel[1].type != "GUILD_CATEGORY" && channel[1].type != "GUILD_NEWS_THREAD" && channel[1].type != "GUILD_PUBLIC_THREAD" && channel[1].type != "GUILD_PRIVATE_THREAD" ) {
         console.log("1");
+        msg.channel.send("permissions for " + channel[0] + " has changed");
         const overwrites = await channel[1].permissionOverwrites.cache;
+        await console.log(overwrites)
         if (overwrites.size == 0) {
           channel[1].permissionOverwrites.edit("998682692390506516", { VIEW_CHANNEL: true });
           console.log("lo yarutz");
