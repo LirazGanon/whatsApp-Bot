@@ -1,9 +1,15 @@
-const { Client, Intents } = require("discord.js");
+const { Client, Intents, User } = require("discord.js");
 const client = new Client({ intents: new Intents(3243773) });
 
+const gMap = new Map();
+const gUserResponse = {}
 const gUser = {}
+const prefixMsg = `היי, 
+אני דבי, הבוט של
+ Dev Online`
+
 const gMsg = [
-  'איך תרצה שנקרא לך?',
+  'מי אתה?',
   `מהו הנושא שתרצה לפרסם בו?\n
   \t2️⃣ Javascrip \n
   \t3️⃣ Python\n 
@@ -22,34 +28,34 @@ client.on("ready", () => {
 });
 
 client.on("messageCreate", async (msg) => {
-  if (msg.author.id === '1025672251850375188') return
-  // console.log(msg);
-  // console.log(msg.content);
 
-  if (!currOpt) {
-    if (msg.content === '%') {
-      msg.channel.send(gMsg[currOpt])
-      currOpt++
-      return
-    } else {
-      // msg.channel.send('invalid prefix')
-      return
-    }
+  if (msg.content === '%') {
+    gMap.set(msg.author.id, { currOpt: 0, answers: {} });
+    msg.channel.send(prefixMsg)
+    msg.channel.send(gMsg[gMap.get(msg.author.id).currOpt++])
+    return
   }
 
-  gUser[currOpt] = msg.content
-  msg.channel.send(gMsg[currOpt])
-  currOpt++
+  try {
+    const currOpt = gMap.get(msg.author.id).currOpt
+    gMap.get(msg.author.id).answers[currOpt] = msg.content
+    msg.channel.send(gMsg[gMap.get(msg.author.id).currOpt++])
 
-  if (gMsg.length === currOpt) {
-    currOpt = 0
-    msg.channel.send(JSON.stringify(gUser))
-    const attachments = JSON.parse(JSON.stringify(msg.attachments))
-    if (attachments.length > 0){
-      msg.channel.send(`You are so hot!!\n ${attachments[0].attachment}`)
+    if (gMsg.length === gMap.get(msg.author.id).currOpt) {
+
+      msg.channel.send(JSON.stringify(gMap.get(msg.author.id).answers))
+      const attachments = JSON.parse(JSON.stringify(msg.attachments))
+      if (attachments.length > 0) {
+        console.log(attachments[0].url)
+        gMap.get(msg.author.id).attachments = (attachments[0].url)
+        msg.channel.send(JSON.stringify(gMap.get(msg.author.id).attachments))
+      }
+      gMap.delete(msg.author.id)
+   
     }
-  }
-
+  } catch (err) {
+    return
+  } 
 })
 
-client.login("MTAyNTY3MjI1********************************");
+client.login("**********");
