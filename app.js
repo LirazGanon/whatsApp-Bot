@@ -1,16 +1,25 @@
-const { Client, Intents, User } = require("discord.js");
-const client = new Client({ intents: new Intents(3243773) });
+const { Client, GatewayIntentBits } = require('discord.js');
+const { token } = require('./config.json');
+const dotenv = require('dotenv');
+dotenv.config();
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers,
+  ],
+});
 
 const gInProggres = new Map();
 const gClients = new Map();
-const gUserResponse = {}
-const gUser = {}
+const gChannels = new Map();
 
-let gUserInput = true
-let currOpt = 0
 
 
 const State = {
+  Ignore: -1,
   New: 0,
   Idle: 1,
   InPost: 2
@@ -20,13 +29,19 @@ const welcomeMsg = `היי,
 Dev Online`
 
 const letsMeetMsg = "נעים להכיר, ומי אתם?"
+const letsMeetAgainMsg = "איך נקרא לך מעכשיו?"
 
 const letsStartMsg = `כדי להתחיל לרשום פוסט שלחו #start\n
 לעזרה בכל שלב שלחו #help`
 
+const callManager = `<@&1000492244085768223>`
+const whatsappBotID = '1028194439606317077'
+
 const optionsMsg = `להתחיל לרשום פוסט - $start \n
 לביטול #stop \n
-להצגת התפריט הזה #help`
+לשינוי שם #rename \n
+לקריאה למנהל #manager \n
+להצגת התפריט הזה #help \n`
 const stopProggress = `אין בעיה, ביטלתי את הפוסט`
 const gMsg = [
   `מהו הנושא שתרצה לפרסם בו?\n
@@ -38,17 +53,19 @@ const gMsg = [
   `תודה לך! אלו הפרטים שנקלטו:\n`
 ]
 
-client.on("ready", () => {
-  console.log("im online");
-})
+client.once('ready', () => {
+  console.log('I am Ready master!');
+});
 
 client.on("messageCreate", async (msg) => {
-  if (msg.author.id === '1025672251850375188') return
+  if (msg.author.bot && msg.author.id !== whatsappBotID) return
   if ((msg.channel.parent == null) || (msg.channel.parent.name == null)) return
   if (!(msg.channel.parent.name.toLowerCase() === `whatsapp`)) return
   let userId = msg.author.id;
+  let channelId = msg.channelId;
   if (!gClients.has(userId)) {
     gClients.set(userId, { clientName: ``, state: State.New })
+    gChannels.set(channelId, { state: State.Idle })
     welcomeTxt = welcomeMsg
     msg.channel.send(welcomeMsg)
     msg.channel.send(letsMeetMsg)
@@ -68,15 +85,47 @@ client.on("messageCreate", async (msg) => {
         gClients.get(userId).state = State.Idle
         msg.channel.send(stopProggress)
         return
-        break
       }
     case `#help`:
       {
         msg.channel.send(optionsMsg)
-        break
+        return
       }
+    case `#rename`:
+      {
+        msg.channel.send(letsMeetAgainMsg)
+        gClients.get(userId).state = State.New
+        return
+      }
+    case `#manager`:
+      {
+        msg.channel.send(callManager)
+        return
+      }
+    case `#silence`:
+      {
+        gChannels.get(channelId).state = State.Ignore
+        return
+      }
+    case `#reactive`:
+      {
+        gChannels.get(channelId).state = State.Idle
+      }
+    /*case `#list`:
+      {
+        const guild = msg.guild;
+        const categoryChannels = guild.channels
+        msg.channel.send(categoryChannels)
+        return
+      }*/
   }
 
+  switch (gChannels.get(channelId).state) {
+    case State.Ignore:
+      {
+        return
+      }
+  }
   switch (gClients.get(userId).state) {
     case State.New:
       {
@@ -117,7 +166,7 @@ client.on("messageCreate", async (msg) => {
         break
       }
   }
-  
+
 })
 
-client.login("<Your login info here>")
+client.login(token)
